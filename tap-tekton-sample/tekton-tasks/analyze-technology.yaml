@@ -1,0 +1,53 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: analyze-technology
+spec:
+  params:
+  - name: source-url
+    type: string
+  results:
+  - name: technology
+
+  steps:
+    - image: gradle # contains bash
+      name: analyze
+      script: |
+        #!/usr/bin/env bash
+        cd `mktemp -d`
+        wget -qO- $(params.source-url) | tar xvz -m
+        echo ">>> Analyze"
+        ls
+        echo ">>> Source Code:"
+        ls
+        if [[ -f "pom.xml" ]]
+        then
+          echo -n maven | tee $(results.technology.path)
+          echo -e "\nThis is a Maven project!"
+          cat $(results.technology.path)
+        fi
+        if [[ -f "build.gradle" ]]
+        then
+          echo -n gradle | tee $(results.technology.path)
+          echo -e "\nThis is a Gradle project!"
+          cat $(results.technology.path)
+        fi
+        if [[ -f "go.mod" ]]
+        then
+          echo -n golang | tee $(results.technology.path)
+          echo -e "\nThis is a Golang project!"
+          cat $(results.technology.path)
+        fi
+        if compgen -G "*.sln" > /dev/null || compgen -G "*/*.sln" > /dev/null
+        then
+          echo -n dotnet | tee $(results.technology.path)
+          echo -e "\nThis is a .NetCore project!"
+          cat $(results.technology.path)
+        fi
+        if compgen -G "*.py" > /dev/null || compgen -G "*/*.py" > /dev/null
+        then
+          echo -n python | tee $(results.technology.path)
+          echo -e "\nThis is a Python project!"
+          cat $(results.technology.path)
+        fi
+        exit 0

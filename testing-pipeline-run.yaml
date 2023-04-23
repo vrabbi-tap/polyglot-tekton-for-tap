@@ -1,0 +1,18 @@
+apiVersion: tekton.dev/v1beta1
+kind: PipelineRun
+metadata:
+  generateName: testing-pipeline-run-
+spec:
+  pipelineRef:
+    name: testing-pipeline
+  params:
+    - name: source-revision
+      value: test
+    - name: source-url
+      value: http://fluxcd-source-controller.flux-system.svc.cluster.local./gitrepository/default/maven-example-app/latest.tar.gz
+#    - name: source-url
+#      value:  http://fluxcd-source-controller.flux-system.svc.cluster.local./gitrepository/default/gradle-example-app/latest.tar.gz
+#    - name: source-url
+#      value: http://fluxcd-source-controller.flux-system.svc.cluster.local./gitrepository/default/golang-example-app/latest.tar.gz
+#    - name: source-url
+#      value: http://fluxcd-source-controller.flux-system.svc.cluster.local./gitrepository/default/dotnet-example-app/latest.tar.gz

@@ -1,0 +1,90 @@
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: testing-pipeline
+spec:
+  description: |
+    This pipeline clones a tar.gz file with the fetched data from a Git repository and runs unit tests.
+  params:
+  - name: source-url
+    type: string
+  - name: source-revision
+    type: string
+    
+  tasks:
+    - name: analyze-technology
+      taskRef:
+        name: analyze-technology
+      params:
+        - name: source-url
+          value: $(params.source-url)
+
+    - name: maven-unit-tests
+      taskRef:
+        name: maven-unit-tests
+      runAfter: [ "analyze-technology" ]
+      when:
+        - input: $(tasks.analyze-technology.results.technology)
+          operator: in
+          values: [ "maven" ]
+      params:
+        - name: source-url
+          value: $(params.source-url)
+
+    - name: gradle-unit-tests
+      taskRef:
+        name: gradle-unit-tests
+      runAfter: [ "analyze-technology" ]
+      when:
+        - input: $(tasks.analyze-technology.results.technology)
+          operator: in
+          values: [ "gradle" ]
+      params:
+        - name: source-url
+          value: $(params.source-url)
+
+    - name: golang-unit-tests
+      taskRef:
+        name: golang-unit-tests
+      runAfter: [ "analyze-technology" ]
+      when:
+        - input: $(tasks.analyze-technology.results.technology)
+          operator: in
+          values: [ "golang" ]
+      params:
+        - name: source-url
+          value: $(params.source-url)
+
+    - name: dotnet-unit-tests
+      taskRef:
+        name: dotnet-unit-tests
+      runAfter: [ "analyze-technology" ]
+      when:
+        - input: $(tasks.analyze-technology.results.technology)
+          operator: in
+          values: [ "dotnet" ]
+      params:
+        - name: source-url
+          value: $(params.source-url)
+
+    - name: python-unit-tests
+      taskRef:
+        name: python-unit-tests
+      runAfter: [ "analyze-technology" ]
+      when:
+        - input: $(tasks.analyze-technology.results.technology)
+          operator: in
+          values: [ "python" ]
+      params:
+        - name: source-url
+          value: $(params.source-url)
+
+  finally:
+    - name: tests-results
+      taskRef:
+        Name: tests-results
+      params:
+        - name: aggregateTasksStatus
+          value: $(tasks.status)
+        - name: technology
+          value: $(tasks.analyze-technology.results.technology)

@@ -1,0 +1,33 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: gradle-unit-tests
+spec:
+  params:
+    - name: source-url
+      type: string
+  results:
+    - name: pass
+  steps:
+    - image: docker.io/gradle:jdk17@sha256:4f4c10efcc484311a0065ccbb0b17c98d0ff58dd72521df0424e3084fa9e6044
+      onError: stopAndFail
+      name: run-tests
+      script: |
+        #!/usr/bin/env bash
+        cd `mktemp -d`
+        wget -qO- $(params.source-url) | tar xvz -m
+        echo ">>> Unit-Tests"
+        gradle clean test --info
+        if [[ $? -ne 0 ]] 
+        then
+          echo -e "\n\n[RESULT] ----------------------------------------------------------------------"
+          echo -n "Passed all Unit-Tests: FALSE"
+          echo -n false | tee $(results.pass.path)
+          exit 1
+        else
+          echo -e "\n\n[RESULT] ----------------------------------------------------------------------"
+          echo -n "Passed all Unit-Tests: TRUE"
+          echo -n true | tee $(results.pass.path)
+          exit 0
+        fi
+        exit 2

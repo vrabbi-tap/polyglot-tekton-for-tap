@@ -1,0 +1,38 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: python-unit-tests
+spec:
+  params:
+    - name: source-url
+      type: string
+  results:
+    - name: pass
+  steps:
+    - image: python:latest
+      onError: stopAndFail
+      name: run-tests
+      script: |
+        #!/usr/bin/env bash
+        cd `mktemp -d`
+        wget -qO- $(params.source-url) | tar xvz -m
+        echo ">>> Unit-Tests"
+        if [ -e "requirements.txt" ];
+        then
+          pip install -r requirements.txt
+        fi
+        pip install pytest
+        pytest .
+        if [[ $? -ne 0 ]] 
+        then
+          echo -e "\n\n[RESULT] ----------------------------------------------------------------------"
+          echo -n "Passed all Unit-Tests: FALSE"
+          echo -n false | tee $(results.pass.path)
+          exit 1
+        else
+          echo -e "\n\n[RESULT] ----------------------------------------------------------------------"
+          echo -n "Passed all Unit-Tests: TRUE"
+          echo -n true | tee $(results.pass.path)
+          exit 0
+        fi
+        exit 2

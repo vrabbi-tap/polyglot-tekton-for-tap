@@ -1,0 +1,34 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: dotnet-unit-tests
+spec:
+  params:
+    - name: source-url
+      type: string
+  results:
+    - name: pass
+  steps:
+    - image: mcr.microsoft.com/dotnet/sdk:6.0
+      onError: stopAndFail
+      name: run-tests
+      script: |
+        #!/bin/bash 
+        cd `mktemp -d`
+        wget -qO- $(params.source-url) | tar xvz -m
+        echo ">>> Unit-Tests:"
+        dotnet test
+        if [[ $? -ne 0 ]]
+        then
+          echo -e "\n\n[RESULT] ----------------------------------------------------------------------"
+          echo -n "Passed all Unit-Tests: FALSE"
+          echo -n false | tee $(results.pass.path)
+          exit 1
+        else
+          echo -e "\n\n[RESULT] ----------------------------------------------------------------------"
+          echo -n "Passed all Unit-Tests: TRUE"
+          echo -n true | tee $(results.pass.path)
+          exit 0
+        fi
+        echo ">>> Done executing Unit-Tests"
+        exit

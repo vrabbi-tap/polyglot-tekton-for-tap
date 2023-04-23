@@ -1,0 +1,33 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: maven-unit-tests
+spec:
+  params:
+    - name: source-url
+      type: string
+  results:
+    - name: pass
+  steps:
+    - image: docker.io/maven:latest@sha256:d9035c93956cda1f067a6fe5d120c6c3575830dd651802e72c8e9376b78563b9
+      onError: stopAndFail
+      name: run-tests
+      script: |
+        #!/usr/bin/env bash
+        cd `mktemp -d`
+        wget -qO- $(params.source-url) | tar xvz -m
+        echo ">>> Unit-Tests"
+        mvn clean test
+        if [[ $? -ne 0 ]] 
+        then
+          echo -e "\n\n[RESULT] ----------------------------------------------------------------------"
+          echo -n "Passed all Unit-Tests: FALSE"
+          echo -n false | tee $(results.pass.path)
+          exit 1
+        else
+          echo -e "\n\n[RESULT] ----------------------------------------------------------------------"
+          echo -n "Passed all Unit-Tests: TRUE"
+          echo -n true | tee $(results.pass.path)
+          exit 0
+        fi
+        exit 2

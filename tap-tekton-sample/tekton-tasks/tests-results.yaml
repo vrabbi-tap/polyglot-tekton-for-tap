@@ -1,0 +1,27 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: tests-results
+spec:
+  params:
+    - name: aggregateTasksStatus
+      type: string
+    - name: technology
+      type: string
+  steps:
+    - image: ubuntu
+      name: summary
+      script: |
+        #!/usr/bin/env bash
+        echo ">>> Tests-Results"
+        ls
+        echo -e ">>> Params:\naggregateTasksStatus = $(params.aggregateTasksStatus)\ntechnology = $(params.technology)"
+        if [[ $(params.aggregateTasksStatus) == "Succeeded" || $(params.aggregateTasksStatus) == "Completed"  ]]
+        then
+          echo "######################## Passed Testing Pipeline! ########################"
+          exit 0
+        else
+          echo "######################## Failed Testing Pipeline! ########################"
+          exit 1
+        fi
+        exit 2
